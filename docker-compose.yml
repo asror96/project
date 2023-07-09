@@ -1,6 +1,17 @@
-version: '3'
+version: "3.9"
 
 services:
+
+  app:
+    build:
+      context: .
+      dockerfile: server/app/Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./server/app/:/var/www
+    depends_on:
+      - web
   web:
     build:
       context: .
@@ -12,23 +23,13 @@ services:
       - ./server/nginx/conf.d:/etc/nginx/conf.d
     container_name: project_web
     depends_on:
-      - app
-  app:
-    build:
-      context: .
-      dockerfile: server/app/Dockerfile
-    env_file:
-      - .env
-    volumes:
-      - ./server/app/:/var/www
-    depends_on:
       - db
   db:
     image: postgres:latest
     restart: always
     ports:
-      - "5433:5432"
+      - "5433:${DB_PORT}"
     environment:
       POSTGRES_USER: ${DB_USERNAME:-postgresql}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-root}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-root?}
       POSTGRES_DB: ${DB_DATABASE:-postgresql}
