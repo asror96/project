@@ -1,35 +1,41 @@
-version: "3.9"
+version: '3.9'
 
 services:
-
-  app:
-    build:
-      context: .
-      dockerfile: server/app/Dockerfile
-    env_file:
-      - .env
-    volumes:
-      - ./server/app/:/var/www
-    depends_on:
-      - web
   web:
     build:
-      context: .
-      dockerfile: server/nginx/Dockerfile
+      context: ./server/nginx
+      dockerfile: Dockerfile
     ports:
-      - "8055:80"
+      - target: 80
+        published: 8080
+        protocol: tcp
+        mode: host
     volumes:
       - ./server/app/:/var/www
       - ./server/nginx/conf.d:/etc/nginx/conf.d
     container_name: project_web
-    depends_on:
-      - db
   db:
+    env_file:
+      - .env
     image: postgres:latest
     restart: always
     ports:
-      - "5433:${DB_PORT}"
+      - target: 5432
+        published: 5433
+        protocol: tcp
+        mode: host
     environment:
-      POSTGRES_USER: ${DB_USERNAME:-postgresql}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-root?}
-      POSTGRES_DB: ${DB_DATABASE:-postgresql}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD?}
+      POSTGRES_DB: ${DB_DATABASE}
+  app:
+    build:
+      context: ./server/app
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./server/app:/var/www
+    depends_on:
+      - web
+      - db
